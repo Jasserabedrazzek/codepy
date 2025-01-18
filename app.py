@@ -1,64 +1,24 @@
 import streamlit as st
-from PIL import Image
-import pytesseract
-import json
 
-# Set the path for Tesseract-OCR
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# Title of the app
+st.title("Streamlit Backend")
 
-# Function to save data to JSON file
-def save_data_to_json(file_path, new_data):
-    try:
-        # Try to read the existing data from the file
-        with open(file_path, "r") as file:
-            existing_data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # If file doesn't exist or is invalid, initialize as an empty list
-        existing_data = []
+# Get query parameters from the URL
+query_params = st.experimental_get_query_params()
 
-    # Ensure existing data is a list
-    if isinstance(existing_data, list):
-        existing_data.append(new_data)
-    else:
-        raise ValueError("The JSON file must contain a list of items.")
+# Check if data is received
+if "name" in query_params and "age" in query_params:
+    name = query_params["name"][0]
+    age = query_params["age"][0]
+    st.write(f"Received data: Name = {name}, Age = {age}")
 
-    # Write the updated data back to the file
-    with open(file_path, "w") as file:
-        json.dump(existing_data, file, indent=4)
+    # Process the data (e.g., save to a database or perform calculations)
+    response = {"status": "success", "message": f"Hello {name}, you are {age} years old!"}
+else:
+    response = {"status": "error", "message": "No data received"}
 
-# Streamlit app
-st.title("OCR Text Extraction and Storage")
+# Display the response
+st.write("Response:", response)
 
-# Capture an image from the camera
-picture = st.camera_input('Capture an Image')
-
-if picture:
-    # Open the image from the captured input
-    image = Image.open(picture)
-    
-    # Extract text using pytesseract
-    text = pytesseract.image_to_string(image)
-    
-    # Display the extracted text
-    st.info("Extracted Text:")
-    st.write(text)
-    
-    # Save the extracted text to a JSON file
-    data = {"extracted_text": text}
-    save_data_to_json('data.json', data)
-    
-    # Load and display the saved JSON data
-    try:
-        with open('data.json', 'r') as file:
-            json_data = json.load(file)
-        st.success("Saved Data:")
-        # st.json(json_data)
-    except FileNotFoundError:
-        st.error("Data file not found.")
-
-with st.sidebar :
-    with open('data.json','r') as f:
-        data = json.load(f)
-    for line in data:
-        st.code(line["extracted_text"])
-        
+# Store the response in session state
+st.session_state["response"] = response
